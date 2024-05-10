@@ -2,11 +2,12 @@
  * point pairs with Haversine distances calculated for each pair. */
 
 #include <assert.h>
-#include <stdio.h>
-#include <stdint.h>
-#include <stdlib.h>
 #include <err.h>
 #include <math.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 enum file {
     DATA_JSON,
@@ -18,8 +19,9 @@ enum file {
 };
 
 void usage(char *arg0);
-char *get_filename(char *prefix, enum file f);
+char *trim(char *str);
 void run(char *prefix, long long count, long long seed);
+char *get_filename(char *prefix, enum file f);
 double haversine(double lon1, double lat1, double lon2, double lat2);
 void write_json(FILE *fp);
 void write_f64(FILE *fp);
@@ -32,13 +34,24 @@ void write_txt(FILE *fp);
 int
 main(int argc, char **argv)
 {
+	char *prefix;
+	long long count, seed;
 	if (argc < 3) {
 		usage(argv[0]);
 		errx(1, "Missing required arguments");
 	}
-	run(argv[1],
-	    atoll(argv[2]),
-	    argc > 3 ? atoll(argv[3]) : 0);
+	prefix = trim(argv[1]);
+	if (!prefix[0]) {
+		usage(argv[0]);
+		errx(1, "Prefix value is required and can't be empty");
+	}
+	count = atoll(argv[2]);
+	if (count == 0) {
+		usage(argv[0]);
+		errx(1, "Invalid count value, has to be greater than 0");
+	}
+	seed = argc > 3 ? atoll(argv[3]) : 0;
+	run(prefix, count, seed);
 	return 0;
 }
 
@@ -50,24 +63,14 @@ usage(char *arg0)
 }
 
 char *
-get_filename(char *prefix, enum file f)
+trim(char *str)
 {
-	static char filename[FILENAME_MAX] = "";
-	char *suffix;
-	switch (f) {
-	case DATA_JSON: suffix = "data.json"; break;
-	case DATA_F64:  suffix = "data.f64";  break;
-	case HSIN_JSON: suffix = "hsin.json"; break;
-	case HSIN_F64:  suffix = "hsin.f64";  break;
-	case INFO_TXT:  suffix = "info.txt";  break;
-	case _FILE_COUNT:
-		/* Added for completion but not a real file so
-		 * fallthrough to assertion. */
-	default:
-		assert(0);	/* Unreachable */
-	}
-	snprintf(filename, sizeof(filename), "%s%s", prefix, suffix);
-	return filename;
+	size_t i;
+	while (*str <= ' ') str++;
+	i = strlen(str);
+	while (str[i-1] <= ' ') i--;
+	str[i] = 0;
+	return str;
 }
 
 void
@@ -106,6 +109,27 @@ run(char *prefix, long long count, long long seed)
 			err(1, "Failed to close file: %s", filename);
 		}
 	}
+}
+
+char *
+get_filename(char *prefix, enum file f)
+{
+	static char filename[FILENAME_MAX] = "";
+	char *suffix;
+	switch (f) {
+	case DATA_JSON: suffix = "data.json"; break;
+	case DATA_F64:  suffix = "data.f64";  break;
+	case HSIN_JSON: suffix = "hsin.json"; break;
+	case HSIN_F64:  suffix = "hsin.f64";  break;
+	case INFO_TXT:  suffix = "info.txt";  break;
+	case _FILE_COUNT:
+		/* Added for completion but not a real file so
+		 * fallthrough to assertion. */
+	default:
+		assert(0);	/* Unreachable */
+	}
+	snprintf(filename, sizeof(filename), "%s-%s", prefix, suffix);
+	return filename;
 }
 
 double

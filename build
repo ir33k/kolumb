@@ -5,4 +5,4 @@ CC="cc"
 CFLAGS="-Wall -Wextra -Wshadow -Wmissing-declarations -Wswitch-enum -Wno-deprecated-declarations -pedantic"
 CLIBS="-lm"
 
-$CC $CFLAGS -o kolumb kolumb.c $CLIBS
+$CC $CFLAGS -o kolumb main.c $CLIBS
