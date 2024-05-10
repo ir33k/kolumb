@@ -1,0 +1,8 @@
+#!/usr/bin/env sh
+set -ex # Stop on first error and log all commands
+
+CC="cc"
+CFLAGS="-Wall -Wextra -Wshadow -Wmissing-declarations -Wswitch-enum -Wno-deprecated-declarations -pedantic"
+CLIBS="-lm"
+
+$CC $CFLAGS -o kolumb kolumb.c $CLIBS
